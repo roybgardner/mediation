@@ -19,6 +19,92 @@ twenty_distinct_colors = ['#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231',
                           '#800000', '#aaffc3', '#808000', '#ffd8b1', '#000075', '#808080', '#ffffff',\
                           '#000000']
 
+
+
+def get_empty_edge_dict():
+    """
+    Dictionary for storing mediation-actor edge properties.
+    The values of the properties form a binary string
+    These strings are converted to integers for use a biadjacency cells values which are edge weights
+    return dictionary of properties in left-to-right order in the binary string
+    """
+    edge_dict = {}
+    edge_dict['is_lead'] = 0
+    edge_dict['good_offices'] = 0
+    edge_dict['mediation'] = 0
+    edge_dict['hosting'] = 0
+    edge_dict['negotiating'] = 0
+    edge_dict['manipulating'] = 0
+    edge_dict['humanitarian'] = 0
+    edge_dict['witness'] = 0
+    edge_dict['other'] = 0
+    return edge_dict
+
+
+def get_edge_weight(edge_dict):
+    """
+    Convert edge property values into an integer
+    param edge_dict: dictionary containing set of Boolean valued edge properties
+    return edge_weight: an integer encoding the binary string of edge properties
+    """
+    s = ''
+    for k,v in edge_dict.items():
+        s += str(v)
+    return int(''.join(c for c in s),2)
+
+def recover_edge_dict(edge_weight,props_length):
+    """
+    Recover the edge dictionary from an edge weight
+    param edge_weight: integer value
+    param props_length: length of properties binary string
+    return edge_dict: dictionary containing set of Boolean valued edge properties
+    """
+    formatter = '0' + str(props_length) + 'b'
+    # Convert edge weight integer to binary string
+    b = format(edge_weight, formatter)
+    edge_dict = {}
+    edge_dict['is_lead'] = b[0]
+    edge_dict['good_offices'] = b[1]
+    edge_dict['mediation'] = b[2]
+    edge_dict['hosting'] = b[3]
+    edge_dict['negotiating'] = b[4]
+    edge_dict['manipulating'] = b[5]
+    edge_dict['humanitarian'] = b[6]
+    edge_dict['witness'] = b[7]
+    edge_dict['other'] = b[8]
+    return edge_dict
+
+def adjacency_from_biadjacency(data_dict):
+    """
+    Build the full adjacency matrix from the binary part which represents bipartite 
+    graph. The full adjacency is needed for DFS and by network packages.
+    Rows and columns of the adjacency matrix are identical and
+    are constructed from the biadjacency matrix in row-column order.
+    The number of rows (and columns) in the adjacency matrix is therefore:
+    biadjacency.shape[0] +  biadjacency.shape[1]
+    param data_dict: A dictionary containing mediation network data
+    return adjacency matrix and list of vertex labels. The latter is the concatenated lists of
+    agreement and actor vertex labels
+    """    
+    binary_matrix = data_dict['matrix']
+    size = binary_matrix.shape[0] + binary_matrix.shape[1]
+    adjacency_matrix = np.zeros((size,size))
+    
+    # Get the range of the bin matrix rows to generate the upper triangle
+    # of the adjacency matrix
+    row_index = 0
+    col_index = binary_matrix.shape[0]
+    adjacency_matrix[row_index:row_index + binary_matrix.shape[0],\
+           col_index:col_index + binary_matrix.shape[1]] = binary_matrix
+    # Add in the lower triangle
+    adjacency_matrix = adjacency_matrix + adjacency_matrix.T    
+    adj_vertices = []
+    adj_vertices.extend(data_dict['mediation_vertices'])
+    adj_vertices.extend(data_dict['actor_vertices'])
+
+    return adjacency_matrix,adj_vertices
+
+
 def depth_first_search(matrix,query_index,max_depth=1,depth=1,vertices=[],visited=[]):
     """
     Recursive function to visit all vertices that are reachable from a query vertex.
@@ -41,35 +127,6 @@ def depth_first_search(matrix,query_index,max_depth=1,depth=1,vertices=[],visite
             vertices = depth_first_search(matrix,i,max_depth=1,depth=1,vertices=vertices,visited=visited)
     return vertices
 
-def adjacency_from_biadjacency(pp_data_dict):
-    """
-    Build the full adjacency matrix from the binary part which represents bipartite 
-    agreements-actor graph. The full adjacency is needed for DFS and by network packages.
-    Rows and columns of the adjacency matrix are identical and
-    are constructed from the binary-valued matrix in row-column order.
-    The number of rows (and columns) in the adjacency matrix is therefore:
-    binary_matix.shape[0] +  binary_matix.shape[1]
-    param pp_data_dict: A dictionary containing peace process network data inclusing the BVRM
-    return adjacency matrix and list of vertex labels. The latter is the concatenated lists of
-    agreement and actor vertex labels
-    """    
-    binary_matrix = pp_data_dict['pp_matrix']
-    size = binary_matrix.shape[0] + binary_matrix.shape[1]
-    adjacency_matrix = np.zeros((size,size))
-    
-    # Get the range of the bin matrix rows to generate the upper triangle
-    # of the adjacency matrix
-    row_index = 0
-    col_index = binary_matrix.shape[0]
-    adjacency_matrix[row_index:row_index + binary_matrix.shape[0],\
-           col_index:col_index + binary_matrix.shape[1]] = binary_matrix
-    # Add in the lower triangle
-    adjacency_matrix = adjacency_matrix + adjacency_matrix.T    
-    adj_vertices = []
-    adj_vertices.extend(pp_data_dict['pp_agreement_ids'])
-    adj_vertices.extend(pp_data_dict['pp_actor_ids'])
-
-    return adjacency_matrix,adj_vertices
 
 def get_query_matrix(query_indices,matrix,max_depth=1,operator='OR'):    
     """
@@ -174,86 +231,6 @@ def get_cooccurrence_matrices(matrix):
     W = np.matmul(matrix,matrix.T)
     return (V,W)
 
-def load_agreement_actor_data(nodes_file,links_file,agreements_dict,data_path):
-    # Stash data in a dictionary
-    data_dict = {}
-    
-    # Read the CSVs
-    with open(data_path + nodes_file, encoding='utf-8', errors='replace') as f:
-        reader = csv.reader(f)
-        # Get the header row
-        nodes_header = next(reader)
-        # Put the remaining rows into a list of lists
-        nodes_data = [row for row in reader]
-
-    with open(data_path + links_file, encoding='utf-8', errors='replace') as f:
-        reader = csv.reader(f)
-        # Get the header row
-        links_header = next(reader)
-        # Put the remaining rows into a list of lists
-        links_data = [row for row in reader]
-
-    with open(data_path + agreements_dict) as f:
-        agreements_dict = json.load(f)
-    
-    # Agreement are from vertices
-    agreement_vertices = list(set([row[links_header.index('from_node_id')] for row in links_data]))
-    # Actors are to vertices
-    actor_vertices = list(set([row[links_header.index('to_node_id')] for row in links_data]))
-
-    # edge_dict links each agreement to a list of actors
-    edge_dict = {}
-    # dates_dict stores link each agreement to an integer date in YYYYMMDD format
-    dates_dict = {}
-    for row in links_data:
-        if row[links_header.index('from_node_id')] in edge_dict:
-            edge_dict[row[links_header.index('from_node_id')]].append(row[links_header.index('to_node_id')])
-        else:
-            edge_dict[row[links_header.index('from_node_id')]] = [row[links_header.index('to_node_id')]]
-        if not row[5] in dates_dict:
-            a = row[1].split('-')
-            dates_dict[row[links_header.index('from_node_id')]] = int(''.join(a))
-    
-    # Build a vertices dictionary with node_id as key and node row as the value
-    vertices_dict = {row[nodes_header.index('node_id')]:row for row in nodes_data}
-
-    # Collect all vertex types
-    vertex_types = []
-    for k,v in vertices_dict.items():
-        type_ = v[nodes_header.index('type')]
-        if len(type_) == 0:
-            # This type is missing in node data
-            type_ = 'AGT'
-        vertex_types.append(type_)
-    vertex_types = sorted(list(set(vertex_types)))
-
-    # Build a colour map for types
-    color_map = {type_:twenty_distinct_colors[i] for\
-                 i,type_ in enumerate(vertex_types)}
-        
-    # Build the agreement-actor biadjacency matrix - the core data structure
-    matrix = []
-    for agreement in agreement_vertices:
-        row = [0]*len(actor_vertices)
-        for i,actor in enumerate(actor_vertices):
-            if actor in edge_dict[agreement]:
-                row[i] = 1
-        matrix.append(row)
-    matrix = np.array(matrix)
-    
-    data_dict['agreements_dict'] = agreements_dict
-    data_dict['dates_dict'] = dates_dict
-    data_dict['nodes_data'] = nodes_data
-    data_dict['nodes_header'] = nodes_header
-    data_dict['links_data'] = links_data
-    data_dict['links_header'] = links_header
-    data_dict['agreement_vertices'] = agreement_vertices
-    data_dict['actor_vertices'] = actor_vertices
-    data_dict['vertices_dict'] = vertices_dict
-    data_dict['color_map'] = color_map
-    data_dict['matrix'] = matrix
-
-    return data_dict
 
 def get_agreement_cosignatories(agreement_ids,pp_data_dict):
     """
