@@ -1,0 +1,116 @@
+## Data anomalies
+
+### Missing third-party Gleditsch ID
+
+- Year 2002 mediation 32 third-party Gleditsch ID missing for Norway (corrected)
+- Year 2016 mediation 173 third-party Gleditsch ID missing for Ethiopia (corrected)
+- Year 2016 mediation 171 third-party Gleditsch ID missing for Germany (corrected)
+- Year 2002 mediation 32 third-party Gleditsch ID missing for Italy (corrected)
+- Year 2015 mediation 360 third-party Gleditsch ID missing for Kenya (corrected)
+- Year 2018 mediation 183 third-party Gleditsch ID missing for Qatar (corrected)
+- Year 2017 mediation 177 third-party Gleditsch ID missing for Uganda (corrected)
+- Year 2021 mediation 279 third-party Gleditsch ID missing for USA (corrected)
+
+
+### Typos
+
+- Year 2020 mediation 241 spelling incorrect Türkiye without umlaut (corrected)
+- Year 2020 mediation 245 spelling incorrect Türkiye without umlaut (corrected)
+- SEE ALSO lead actor issues LEAD 219 - incorrect Türkiye without umlaut
+- SEE ALSO lead actor issues LEAD 179 - iGAD
+
+### Inconsistent mediation data - all made consistent
+
+- 247 could be real if mediation spanned years (made all 2020)
+- 248 could be real if mediation spanned conflict locations (made all Sudan)
+- 346 could be real if mediation spanned conflict locations (made all South Sudan)
+
+119 conflict_sublocale ['', 'Abyei']
+120 conflict_sublocale ['Blue Nile; South Kordofan', 'Blue Nile; South Kordofan ']
+174 conflict_sublocale ['Darfur', 'Darfur; South Kordofan; Blue Nile']
+174 negotiation_location ['', 'Ethiopia']
+184 conflict_sublocale ['Blue Nile; South Kordofan', 'Blue Nile; South Kordofan ']
+247 year ['2020', '2021']
+252 negotiation_location ['', 'Italy']
+253 negotiation_location ['', 'South Sudan']
+248 conflict_locale ['Sudan', 'South Sudan']
+313 negotiation_location ['South Sudan', '']
+333 negotiation_location ['Sudan', '']
+346 conflict_locale ['South Sudan', 'Sudan']
+
+### Actor issues
+
+- Netherlands listed twice in actors sheet once as Netherlands and once as The Netherlands. No action taken because use is consistent (as Netherlands) in mediation data
+
+
+### Lead actor issues
+
+LEAD 179 iGAD
+LEAD 200 
+LEAD 200 
+LEAD 200 
+LEAD 200 
+LEAD 200 
+LEAD 200 
+LEAD 200 
+LEAD 212 Troika
+LEAD 212 Troika
+LEAD 212 Troika
+LEAD 219 Turkiye
+LEAD 239 
+LEAD 239 
+LEAD 239 
+LEAD 239 
+LEAD 239 
+LEAD 251 Troika
+LEAD 251 Troika
+LEAD 251 Troika
+LEAD 261 Troika
+LEAD 261 Troika
+LEAD 261 Troika
+LEAD 273 Troika
+LEAD 273 Troika
+LEAD 273 Troika
+LEAD2 284 Toika
+LEAD2 284 Toika
+LEAD2 284 Toika
+LEAD2 284 Toika
+LEAD 286 Friends of Sudan Group
+LEAD 286 Friends of Sudan Group
+LEAD 286 Friends of Sudan Group
+LEAD 286 Friends of Sudan Group
+LEAD 286 Friends of Sudan Group
+LEAD 286 Friends of Sudan Group
+LEAD 286 Friends of Sudan Group
+LEAD 286 Friends of Sudan Group
+LEAD 286 Friends of Sudan Group
+LEAD 286 Friends of Sudan Group
+LEAD 300 IGAD; UN
+LEAD 300 IGAD; UN
+LEAD 300 IGAD; UN
+LEAD 310 UN; IGAD
+LEAD 310 UN; IGAD
+LEAD 322 
+LEAD 322 
+LEAD 322 
+LEAD 322 
+LEAD 322 
+LEAD 322 
+LEAD 322 
+LEAD 322 
+LEAD 341 
+LEAD 341 
+LEAD 341 
+LEAD 341 
+LEAD 341 
+LEAD 341 
+LEAD 341 
+LEAD 341 
+LEAD 343 
+LEAD 343 
+LEAD 343 
+LEAD 343 
+LEAD 343 
+LEAD 343 
+LEAD 343 
+LEAD 343 
