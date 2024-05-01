@@ -296,8 +296,9 @@ def get_query_matrix(query_indices,matrix,max_depth=1,operator='OR'):
     return query_matrix,found_indices
 
 def display_networkx_graph(query_matrix,vertex_indices,adj_vertices,data_dict):
-    node_labels = {i:adj_vertices[index] for i,index in enumerate(vertex_indices)}
-    node_colors = [data_dict['color_map'][v.split('_')[0]] for _,v in node_labels.items()]
+    node_labels = {i:v for i,v in enumerate(adj_vertices)}
+    node_colors = [data_dict['color_map'][data_dict['vertices_dict'][vertex_id]['type']] for vertex_id in adj_vertices]
+
     graph = nx.from_numpy_array(query_matrix, create_using=nx.Graph)
     f = plt.figure(figsize=(16,16))
     pos = nx.spring_layout(graph) 
