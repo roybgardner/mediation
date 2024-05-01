@@ -88,7 +88,7 @@ def load_mediation_data(mediation_file,actors_file,data_path):
                  i,type_ in enumerate(vertex_types)}
         
     # Build the biadjacency matrix
-    matrix = np.zeros([len(mediation_vertices),len(actor_vertices)])
+    matrix = np.zeros([len(mediation_vertices),len(actor_vertices)]).astype(np.int64)
     for row in data:
         mediation_id = row[header.index('mediation ID')]
         mediation_index = mediation_vertices.index(mediation_id)
