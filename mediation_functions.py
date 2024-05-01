@@ -20,13 +20,101 @@ twenty_distinct_colors = ['#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231',
                           '#000000']
 
 
+def load_mediation_data(mediation_file,actors_file,data_path):
+    data_dict = {}
+    
+    # Read the main CSV
+    with open(data_path + mediation_file, encoding='utf-8', errors='replace') as f:
+        reader = csv.reader(f)
+        # Get the header row
+        header = next(reader)
+        # Put the remaining rows into a list of lists
+        data = [row for row in reader]
+    
+    # Read the actors CSV
+    with open(data_path + actors_file, encoding='utf-8', errors='replace') as f:
+        reader = csv.reader(f)
+        # Get the header row
+        actors_header = next(reader)
+        # Put the remaining rows into a list of lists
+        actors_data = [row for row in reader]
+
+    # Each data row defines a mediation-actor relationship
+    # Mediation vertices
+    mediation_vertices = sorted(list(set([row[header.index('mediation ID')].strip() for row in data])))
+    
+    # Actor vertices - using the 'third-party' column because it's used for lead actor definition
+    # and in actors CSV
+    actor_vertices = sorted(list(set([row[header.index('third-party')].strip() for row in data])))  
+    
+    # Check actor vertices from mediation against actors in actors file
+    # Detected one anomaly - Netherland and The Netherlands in actors CSV but consistent use
+    # of Netherlands in mediation CSV
+    #actors = [row[0].strip() for row in actors_data]
+    #print(len(actors))
+    #print(set(actors).difference(set(actor_vertices)))
+    
+    # Build vertices dict
+    vertices_dict = {}
+    vertex_types = []
+    for row in data:
+        mediation_id = row[header.index('mediation ID')].strip()
+        if not mediation_id in vertices_dict:
+            vertices_dict[mediation_id] = {}
+            vertices_dict[mediation_id]['type'] = 'MED'
+            # Need some mediation data. Going to use: year, conflict location,
+            # negotiation location, and negotiation type
+            vertices_dict[mediation_id]['data'] = {}
+            year = row[header.index('year')].strip()
+            vertices_dict[mediation_id]['data']['year'] = year
+            conflict_locale = row[header.index('conflict locale')].strip()
+            vertices_dict[mediation_id]['data']['conflict_locale'] = conflict_locale
+            neg_location = row[header.index('location of neogitations')].strip()
+            vertices_dict[mediation_id]['data']['neg_location'] = neg_location
+            neg_type = row[header.index('negotiation type')].strip()
+            vertices_dict[mediation_id]['data']['neg_type'] = neg_type        
+    for row in actors_data:
+        actor_id = row[0].strip()
+        actor_type = row[1].strip()
+        vertices_dict[actor_id] = {}
+        vertices_dict[actor_id]['type'] = actor_type
+        vertices_dict[actor_id]['data'] = {}
+        vertices_dict[actor_id]['data']['relative_type'] = row[2].strip()
+    
+    # Collect all vertex types
+    vertex_types = list(set([v['type'] for k,v in vertices_dict.items()]))
+    # Build a colour map for types
+    color_map = {type_:twenty_distinct_colors[i] for\
+                 i,type_ in enumerate(vertex_types)}
+        
+    # Build the biadjacency matrix
+    matrix = np.zeros([len(mediation_vertices),len(actor_vertices)])
+    for row in data:
+        mediation_id = row[header.index('mediation ID')]
+        mediation_index = mediation_vertices.index(mediation_id)
+        actor_id = row[header.index('third-party')].strip()
+        actor_index = actor_vertices.index(actor_id)
+        
+        # Need to get the cell value
+        edge_dict = populate_edge_dict(actor_id,row,header)
+        
+        matrix[mediation_index][actor_index] = get_edge_weight(edge_dict)
+        
+    data_dict['header'] = header
+    data_dict['data'] = data
+    data_dict['mediation_vertices'] = mediation_vertices
+    data_dict['actor_vertices'] = actor_vertices
+    data_dict['vertices_dict'] = vertices_dict
+    data_dict['color_map'] = color_map
+    data_dict['matrix'] = matrix
+    return data_dict
 
 def get_empty_edge_dict():
     """
     Dictionary for storing mediation-actor edge properties.
     The values of the properties form a binary string
     These strings are converted to integers for use a biadjacency cells values which are edge weights
-    return dictionary of properties in left-to-right order in the binary string
+    return dictionary of properties
     """
     edge_dict = {}
     edge_dict['is_lead'] = 0
@@ -40,6 +128,33 @@ def get_empty_edge_dict():
     edge_dict['other'] = 0
     return edge_dict
 
+def populate_edge_dict(actor_id,row,header):
+    """
+    Populate an edge dictionary from a row for a given actor
+    param actor_id: ID of actor
+    param row: Mediation data row
+    param header: Mediation row header
+    return dictionary of mediation-actor properties
+    """
+    edge_dict = get_empty_edge_dict()
+    leads = []
+    leads.append(row[header.index('leading actor')].strip())
+    leads.append(row[header.index('leading actor 2')].strip())
+    leads.append(row[header.index('leading actor 3')].strip())
+    if actor_id in leads:
+        edge_dict['is_lead'] = 1
+        
+    edge_dict['good_offices'] = int(row[header.index('good offices')].strip() or 0)
+    edge_dict['mediation'] = int(row[header.index('mediation')].strip() or 0)
+    edge_dict['hosting'] = int(row[header.index('hosting talks')].strip() or 0)
+    edge_dict['negotiating'] =\
+        int(row[header.index('negotiating and drafting')].strip() or 0)
+    edge_dict['manipulating'] = int(row[header.index('manipulating')].strip() or 0)
+    edge_dict['humanitarian'] = int(row[header.index('humanitarian')].strip() or 0)
+    edge_dict['witness'] =\
+        int(row[header.index('witness/party to agreement')].strip() or 0)
+    edge_dict['other'] = int(row[header.index('other')].strip() or 0)
+    return edge_dict
 
 def get_edge_weight(edge_dict):
     """
@@ -103,6 +218,29 @@ def adjacency_from_biadjacency(data_dict):
     adj_vertices.extend(data_dict['actor_vertices'])
 
     return adjacency_matrix,adj_vertices
+
+def get_cooccurrence_matrices(matrix):
+    bin_matrix = (matrix > 1).astype(np.int_)
+    # Columns-columns co-occurence matrix
+    V = np.matmul(bin_matrix.T,bin_matrix)
+    # Rows-rows co-occurence matrix
+    W = np.matmul(bin_matrix,bin_matrix.T)
+    return (V,W)
+
+def get_mediations(actor_id,data_dict):
+    """
+    Get the mediations in which an actor is engaged
+    param actor_id: Actor ID
+    param data_dict: Mediation data dictionary
+    return: List of mediations in which the actor in actor_id is engaged
+    """
+    actor_index = data_dict['actor_vertices'].index(actor_id)
+    agreement_ids = [(data_dict['mediation_vertices'][i],int(v),\
+                      data_dict['vertices_dict'][data_dict['mediation_vertices'][i]]['data']['year']) for\
+                     i,v in enumerate(data_dict['matrix'][:,actor_index]) if v > 0]
+    return agreement_ids
+
+
 
 
 def depth_first_search(matrix,query_index,max_depth=1,depth=1,vertices=[],visited=[]):
@@ -223,13 +361,6 @@ def get_peace_process_data(process_name,data_dict):
     pp_data_dict['pp_agreement_ids'] = pp_agreement_ids
     pp_data_dict['pp_matrix'] = pp_matrix    
     return pp_data_dict
-
-def get_cooccurrence_matrices(matrix):
-    # Actor-actor co-occurence matrix for a peace process
-    V = np.matmul(matrix.T,matrix)
-    # Agreement-agreement co-occurence matrix
-    W = np.matmul(matrix,matrix.T)
-    return (V,W)
 
 
 def get_agreement_cosignatories(agreement_ids,pp_data_dict):
