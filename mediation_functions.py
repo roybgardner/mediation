@@ -220,7 +220,7 @@ def adjacency_from_biadjacency(data_dict):
     return adjacency_matrix,adj_vertices
 
 def get_cooccurrence_matrices(matrix):
-    bin_matrix = (matrix > 1).astype(np.int_)
+    bin_matrix = (matrix > 1).astype(np.int8)
     # Columns-columns co-occurence matrix
     V = np.matmul(bin_matrix.T,bin_matrix)
     # Rows-rows co-occurence matrix
@@ -235,10 +235,11 @@ def get_mediations(actor_id,data_dict):
     return: List of mediations in which the actor in actor_id is engaged
     """
     actor_index = data_dict['actor_vertices'].index(actor_id)
-    agreement_ids = [(data_dict['mediation_vertices'][i],int(v),\
+    mediation_ids = [(data_dict['mediation_vertices'][i],int(v),\
                       data_dict['vertices_dict'][data_dict['mediation_vertices'][i]]['data']['year']) for\
                      i,v in enumerate(data_dict['matrix'][:,actor_index]) if v > 0]
-    return agreement_ids
+    return mediation_ids
+
 
 
 
