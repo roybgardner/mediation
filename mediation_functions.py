@@ -295,16 +295,23 @@ def get_query_matrix(query_indices,matrix,max_depth=1,operator='OR'):
     query_matrix = matrix[np.ix_(found_indices,found_indices)]
     return query_matrix,found_indices
 
-def display_networkx_graph(query_matrix,vertex_indices,adj_vertices,data_dict):
-    node_labels = {i:v for i,v in enumerate(adj_vertices)}
-    node_colors = [data_dict['color_map'][data_dict['vertices_dict'][vertex_id]['type']] for vertex_id in adj_vertices]
+def draw_networkx_graph(matrix,vertices,data_dict):
+    node_labels = {i:v for i,v in enumerate(vertices)}
+    node_colors = [data_dict['color_map'][data_dict['vertices_dict']\
+                                          [vertex_id]['type']] for vertex_id in vertices]
 
-    graph = nx.from_numpy_array(query_matrix, create_using=nx.Graph)
+    graph = nx.from_numpy_array(matrix, create_using=nx.Graph)
     f = plt.figure(figsize=(16,16))
     pos = nx.spring_layout(graph) 
-    nx.draw_networkx(graph,pos,labels=node_labels,node_color=node_colors,node_size=400,font_size=12,alpha=0.6)
+    nx.draw_networkx(graph,pos,labels=node_labels,node_color=node_colors,\
+                     node_size=400,font_size=12,alpha=0.6)
     plt.grid(False)
     plt.show()
+
+    
+    
+
+
     
 def display_comatrix_as_networkx_graph(co_matrix,vertex_indices,vertex_list,data_dict,title=''):
     """
