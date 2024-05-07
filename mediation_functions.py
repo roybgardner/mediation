@@ -1,9 +1,15 @@
+
+from IPython.display import clear_output
+
 import networkx as nx
 
 import numpy as np
 import math
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
+from matplotlib_venn import venn2, venn2_circles
+from matplotlib_venn import venn3, venn3_circles
+
 
 
 import json
@@ -12,6 +18,8 @@ import csv
 
 from scipy import stats
 from scipy.spatial.distance import *
+import time
+
 
 
 twenty_distinct_colors = ['#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231', '#911eb4', '#46f0f0',\
@@ -312,6 +320,68 @@ def draw_networkx_graph(matrix,vertices,data_dict):
     plt.grid(False)
     plt.show()
 
+
+def display_networkx_graph_ts(actor_ids,query_matrix,vertex_indices,adj_vertices,data_dict,title='',file=''):
+    node_labels = {}
+    node_sizes = []
+    for i,index in enumerate(vertex_indices):
+        node_id = adj_vertices[index]
+        node_labels[i] = node_id
+        
+        if node_id == actor_ids[0]:
+            left_node = i
+            node_sizes.append(1600)
+        elif node_id == actor_ids[1]:
+            right_node = i
+            node_sizes.append(1600)
+        else:
+            node_sizes.append(400)
+        
+    found_ids = [adj_vertices[index] for i,index in enumerate(vertex_indices)]
+    node_colors = [data_dict['color_map'][data_dict['vertices_dict']\
+                                          [vertex_id]['type']] for vertex_id in found_ids]
+    
+    graph = nx.from_numpy_array(query_matrix, create_using=nx.Graph)
+    f = plt.figure(figsize=(8,8))
+    pos = nx.circular_layout(graph)
+    
+    pos[left_node] = np.array([-2,0.1])
+    pos[right_node] = np.array([2,0])
+
+    nx.draw_networkx(graph,pos,labels=node_labels,node_color=node_colors,node_size=node_sizes,\
+                     font_size=12,alpha=0.6)
+    plt.grid(False)
+    plt.title(title,fontsize='xx-large')
+    if len(file) > 0:
+        plt.savefig('../../outputs/' + file + '.png', bbox_inches='tight')
+    plt.show()
+
+def get_joint_mediations(actor_ids,data_dict):
+    """
+    Given a list of actors get the mediations in common
+    param actor_ids: List of actor IDs
+    param data_dict: Mediations data dictionary
+    return: List of mediations in which actors are engaged
+    """
+    # Given a list of actors get the mediations in common
+    if len(actor_ids) < 2:        
+        return []
+    for actor_id in actor_ids:
+        if not actor_id in data_dict['actor_vertices']:
+            return []
+    actor_indices = [data_dict['actor_vertices'].index(actor_id) for actor_id in actor_ids]
+    for i,actor_index in enumerate(actor_indices):
+        row = data_dict['matrix'].T[actor_index]
+        if i == 0:
+            mediation_bitset = row
+        else:
+            mediation_bitset = np.bitwise_and(mediation_bitset,row)
+    mediation_ids = []
+    for index,value in enumerate(mediation_bitset): 
+        if value > 1:
+            mediation_ids.append(data_dict['mediation_vertices'][index])
+    return mediation_ids
+
     
 def plot_birectional(left,right,titles,max_x=0,labelled=False,file=''):
     """
@@ -372,8 +442,8 @@ def plot_birectional(left,right,titles,max_x=0,labelled=False,file=''):
     axes[0].tick_params(labelsize='x-large')
     axes[1].tick_params(labelsize='x-large')
     #axes[0].set_ylabel('Ranked topics',fontsize='xx-large')
-    axes[0].set_xlabel('Number of mediations',fontsize='x-large',)
-    axes[1].set_xlabel('Number of mediations',fontsize='x-large',)
+    axes[0].set_xlabel('Number of lead actor roles',fontsize='x-large',)
+    axes[1].set_xlabel('Number of lead actor roles',fontsize='x-large',)
 
     #axes[0].xaxis.set_label_coords(1.025, -0.055)
     if len(file) > 0:
