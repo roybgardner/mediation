@@ -63,7 +63,7 @@ def load_mediation_data(mediation_file,actors_file,data_path):
             vertices_dict[mediation_id] = {}
             vertices_dict[mediation_id]['type'] = 'MED'
             # Need some mediation data. Going to use: year, conflict location,
-            # negotiation location, and negotiation type
+            # negotiation location, negotiation type, agreement
             vertices_dict[mediation_id]['data'] = {}
             year = row[header.index('year')].strip()
             vertices_dict[mediation_id]['data']['year'] = year
@@ -73,6 +73,10 @@ def load_mediation_data(mediation_file,actors_file,data_path):
             vertices_dict[mediation_id]['data']['neg_location'] = neg_location
             neg_type = row[header.index('negotiation type')].strip()
             vertices_dict[mediation_id]['data']['neg_type'] = neg_type        
+            agreement = int(row[header.index('agreement')].strip())
+            vertices_dict[mediation_id]['data']['agreement'] = agreement        
+            peace_agreement = int(row[header.index('peace agreement')].strip())
+            vertices_dict[mediation_id]['data']['peace_agreement'] = peace_agreement        
     for row in actors_data:
         actor_id = row[0].strip()
         actor_type = row[1].strip()
