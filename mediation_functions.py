@@ -313,7 +313,73 @@ def draw_networkx_graph(matrix,vertices,data_dict):
     plt.show()
 
     
-    
+def plot_birectional(left,right,titles,max_x=0,labelled=False,file=''):
+    """
+    Plot a bidirectional graph with constitution section percentages on left and responses on right.
+    x-axis is percentage of above-threshold sections or responses above-threshold for a topic or category
+    y-axis is topic or category label (for all topics the label is the topic ID and is not shown)
+    The left and right data sets must be the same length.
+    param left: Data tuples (label,value) for the left side.
+    param right: Data tuples (label,value) for the right side
+    param titles: Left and right titles in a list [<left_title>,<right__title>]
+    param max_x: Use to manually set the max_x value. If 0 defaults to maximum x + 1 of data series values
+    param labelled: If True then display data tuple lables on the y-axis, otherwise just use integer 
+    values over range of data
+    """
+    maxs = [] 
+    maxs.append(max([t[1] for t in left]))
+    maxs.append(max([t[1] for t in right]))
+
+    if max_x == 0:
+        max_x = int(max(maxs))+1
+    else:
+        max_x = max_x
+
+    font_color = '#525252'
+    facecolor = '#eaeaf2'
+    color_red = '#fd625e'
+    color_blue = '#01b8aa'
+    index = list(range(0,len(left)))
+    column0 = [t[1] for t in left]
+    column1 = [t[1] for t in right]
+    title0 = titles[0]
+    title1 = titles[1]
+
+    fig, axes = plt.subplots(figsize=(10,14), ncols=2, sharey=False)
+    fig.tight_layout()
+
+    axes[0].barh(index, column0, align='center', color=color_red, zorder=10)
+    axes[0].set_title(title0, fontsize=16, pad=15, color=color_red)
+    axes[1].barh(index, column1, align='center', color=color_blue, zorder=10)
+    axes[1].set_title(title1, fontsize=16, pad=15, color=color_blue)
+
+    axes[0].invert_xaxis() 
+    #plt.gca().invert_yaxis()
+
+    plt.subplots_adjust(wspace=0, top=0.85, bottom=0.1, left=0.18, right=0.95)
+
+    axes[0].set_xticks(list(range(0,max_x+5,10)))
+    axes[1].set_xticks(list(range(0,max_x+5,10)))
+    axes[1].set_yticks([])
+
+    if labelled:
+        axes[0].set_yticks(range(0,len(left)))
+        axes[0].set_yticklabels([t[0] for t in left])
+    else:
+        axes[0].set_ylabel('Topic index',fontsize='x-large',)
+        
+
+    axes[0].tick_params(labelsize='x-large')
+    axes[1].tick_params(labelsize='x-large')
+    #axes[0].set_ylabel('Ranked topics',fontsize='xx-large')
+    axes[0].set_xlabel('Number of mediations',fontsize='x-large',)
+    axes[1].set_xlabel('Number of mediations',fontsize='x-large',)
+
+    #axes[0].xaxis.set_label_coords(1.025, -0.055)
+    if len(file) > 0:
+        plt.savefig('./figures/' + file + '.tif',dpi=300,bbox_inches='tight')
+    plt.show()
+   
 
 
     
