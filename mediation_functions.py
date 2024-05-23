@@ -18,6 +18,9 @@ import csv
 
 from scipy import stats
 from scipy.spatial.distance import *
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from termcolor import colored
 import time
 
 
@@ -313,7 +316,7 @@ def draw_networkx_graph(matrix,vertices,data_dict):
                                           [vertex_id]['type']] for vertex_id in vertices]
 
     graph = nx.from_numpy_array(matrix, create_using=nx.Graph)
-    f = plt.figure(figsize=(16,16))
+    f = plt.figure(figsize=(12,12))
     pos = nx.spring_layout(graph) 
     nx.draw_networkx(graph,pos,labels=node_labels,node_color=node_colors,\
                      node_size=400,font_size=12,alpha=0.6)
@@ -342,7 +345,7 @@ def display_networkx_graph_ts(actor_ids,query_matrix,vertex_indices,adj_vertices
                                           [vertex_id]['type']] for vertex_id in found_ids]
     
     graph = nx.from_numpy_array(query_matrix, create_using=nx.Graph)
-    f = plt.figure(figsize=(8,8))
+    f = plt.figure(figsize=(12,12))
     pos = nx.circular_layout(graph)
     
     pos[left_node] = np.array([-2,0.1])
@@ -465,9 +468,10 @@ def display_comatrix_as_networkx_graph(co_matrix,vertex_indices,vertex_list,data
     """
     co_matrix = np.triu(co_matrix,k=1)
     node_labels = {i:vertex_list[index] for i,index in enumerate(vertex_indices)}
-    node_colors = [data_dict['color_map'][v.split('_')[0]] for _,v in node_labels.items()]
+    node_colors = [data_dict['color_map'][data_dict['vertices_dict']\
+                                          [vertex_id]['type']] for vertex_id in vertex_list]
     graph = nx.from_numpy_array(co_matrix, create_using=nx.Graph)
-    f = plt.figure(figsize=(16,16))
+    f = plt.figure(figsize=(12,12))
     pos = nx.circular_layout(graph) 
     nx.draw_networkx(graph,pos,labels=node_labels,node_color=node_colors,node_size=400,alpha=0.6)
     # Get the edge labels
